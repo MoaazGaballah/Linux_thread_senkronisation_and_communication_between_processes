@@ -1,0 +1,15 @@
+#-*-MakeFile -*-
+CC = gcc
+CFLAGS = -c -wall
+
+all: reader prog
+
+
+reader: reader.c
+	$(CC) main.c -o calc
+	
+prog: main.c
+	$(CC) main.c -o prog -lpthread
+
+clean:
+	rm -rf *o all
