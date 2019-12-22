@@ -15,7 +15,7 @@ int generalAddition;
 int square;
 int lineCounter;
 int pipefd[2];
-int threadStatus = 1;
+int readFileStatus = 1;
 
 int isNumber(char *str)
 {
@@ -43,7 +43,8 @@ void delay(int number_of_seconds)
     clock_t start_time = clock();
 
     // looping till required time is not achieved
-    while (clock() < start_time + milli_seconds);
+    while (clock() < start_time + milli_seconds)
+        ;
 }
 
 void *threadReader()
@@ -60,7 +61,7 @@ void *threadReader()
         {
             // printf("i am here\n");
             // bittiStatus = 0;
-            threadStatus = 0;
+            readFileStatus = 0;
             // return 1;
             pthread_exit(1);
             // pthread_kill(pthread_self());
@@ -74,6 +75,7 @@ void *threadReader()
         // printf("Square before sqrt in reader is : %d\n", square);
         // threadCalculator();
         // printf("i is  is %d\t", i);
+        // printf("lineCounter is %d\n", lineCounter);
         printf("numberToken is %s\n", numberToken);
 
         numberToken = strtok(NULL, line);
@@ -87,15 +89,6 @@ void *threadReader()
 
         // printf("i am unlocking calculator\n");
         pthread_mutex_unlock(&threadCalculatorLock);
-    }
-
-    // deleting the content of data.txt file
-    // fopen("data.txt", "w");
-
-    // wait for 10 seconds
-    for (int i = 0; i < 10; i++)
-    {
-        delay(1);
     }
 }
 
@@ -132,79 +125,98 @@ int main()
         exit(1);
     }
 
-    pid = fork();
-
-    if (pid == 0)
+    while (readFileStatus == 1)
     {
-        status = execve("reader", NULL, NULL);
-        perror("execve: execve failed\n");
-        close(pipefd[1]);
-    }
-    else
-    {
-        char allNumbers[1000];
-        wait(&status);
-        // get the line counter exist in data file
-        lineCounter = WEXITSTATUS(status);
-        // printf("lineCounter is from main %d\n", lineCounter);
 
-        // printf("reading from pipe ...\n");
+        pid = fork();
 
-        pthread_mutex_init(&threadReaderLock, NULL);
-        pthread_mutex_init(&threadCalculatorLock, NULL);
+        if (pid == 0)
+        {
+            status = execve("reader", NULL, NULL);
+            perror("execve: execve failed\n");
+            close(pipefd[1]);
+        }
+        else
+        {
+            char allNumbers[1000];
+            wait(&status);
+            // get the line counter exist in data file
+            lineCounter = WEXITSTATUS(status);
+            if (lineCounter == 0)
+            {
+                exit(1);
+            }
 
-        pthread_mutex_lock(&threadCalculatorLock);
+            // printf("lineCounter is from main %d\n", lineCounter);
 
-        pthread_t readerThread;
-        pthread_t calculatorThread;
+            // printf("reading from pipe ...\n");
 
-        generalAddition = 0;
-        square = 0;
+            pthread_mutex_init(&threadReaderLock, NULL);
+            pthread_mutex_init(&threadCalculatorLock, NULL);
 
-        void *status;
+            pthread_mutex_lock(&threadCalculatorLock);
 
-        pthread_create(&readerThread, NULL, threadReader, NULL);
-        pthread_create(&calculatorThread, NULL, threadCalculator, NULL);
+            pthread_t readerThread;
+            pthread_t calculatorThread;
 
-        pthread_join(readerThread, &status);
-        // pthread_join(calculatorThread, &status);
+            generalAddition = 0;
+            square = 0;
 
-        pthread_mutex_destroy(&threadReaderLock);
-        pthread_mutex_destroy(&threadCalculatorLock);
+            void *status;
 
-        // // calling thread reader
-        // threadReader(lineCounter, pipefd);
+            pthread_create(&readerThread, NULL, threadReader, NULL);
+            pthread_create(&calculatorThread, NULL, threadCalculator, NULL);
 
-        // read(pipefd[0], allNumbers, sizeof(allNumbers));
-        // // s[strlen(s) - 1] = 0;
+            pthread_join(readerThread, &status);
+            // pthread_join(calculatorThread, &status);
 
-        // char line[2] = "\n";
+            // pthread_mutex_destroy(&threadReaderLock);
+            // pthread_mutex_destroy(&threadCalculatorLock);
 
-        // char *numberToken = strtok(allNumbers, line);
-        // // printf("this is the result from Token %d");
-        // // printf("This is singleOrRangeToken : %s\n", singleOrRangeToken);
+            // // calling thread reader
+            // threadReader(lineCounter, pipefd);
 
-        // // printf("this is read value : %d\n", number);
-        // // close(pipefd[0]);
+            // read(pipefd[0], allNumbers, sizeof(allNumbers));
+            // // s[strlen(s) - 1] = 0;
 
-        // // printf("sizeof lineCounter %d\n", lineCounter);
-        // for (int i = 0; i < lineCounter; i++)
+            // char line[2] = "\n";
+
+            // char *numberToken = strtok(allNumbers, line);
+            // // printf("this is the result from Token %d");
+            // // printf("This is singleOrRangeToken : %s\n", singleOrRangeToken);
+
+            // // printf("this is read value : %d\n", number);
+            // // close(pipefd[0]);
+
+            // // printf("sizeof lineCounter %d\n", lineCounter);
+            // for (int i = 0; i < lineCounter; i++)
+            // {
+            //     printf("Token now is : %d\n", atoi(numberToken));
+
+            //     numberToken = strtok(NULL, line);
+            // }
+
+            // // using fopen() with "w" mode will do the job for you.
+            // // When you open a file with "w" flag it creates an empty file
+            // // for writing. If a file with the same name already exists
+            // // its contents are erased and the file is treated as an empty
+            // // new file.
+
+            // fopen("data.txt", "w");
+            // // printf("program reads : \n%d", atoi(numberToken));
+
+            // // printf("Read from pipe ... Length is:  %s\n", s);
+        }
+
+        // deleting the content of data.txt file
+        fopen("data.txt", "w");
+
+        // wait for 10 seconds
+        // for (int i = 0; i < 250; i++)
         // {
-        //     printf("Token now is : %d\n", atoi(numberToken));
-
-        //     numberToken = strtok(NULL, line);
+            // delay(1);
+            sleep(15);
         // }
-
-        // // using fopen() with "w" mode will do the job for you.
-        // // When you open a file with "w" flag it creates an empty file
-        // // for writing. If a file with the same name already exists
-        // // its contents are erased and the file is treated as an empty
-        // // new file.
-
-        // fopen("data.txt", "w");
-        // // printf("program reads : \n%d", atoi(numberToken));
-
-        // // printf("Read from pipe ... Length is:  %s\n", s);
     }
     // printf("this is from main (global reader): %d\n", test);
     printf("BİTTİ\n");

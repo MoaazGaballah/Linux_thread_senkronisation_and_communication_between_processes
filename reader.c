@@ -7,8 +7,14 @@ int lineCounter = 0;
 int readFile()
 {
 	FILE *in = fopen("data.txt", "r");
+	if (in == NULL)
+	{
+		perror("Can't open file");
+		// printf("file not found");
+		return 0;
+	}
 	int sum = 0;
-	char *line [100];
+	char *line[100];
 	while (fgets(line, 100, in) != NULL)
 	{
 		lineCounter++;
@@ -19,9 +25,9 @@ int readFile()
 		// close(pipefd[0]);
 		// printf("Writing this line to pipe : %s\n", line);
 
-		write(4, line, strlen(line) );
+		write(4, line, strlen(line));
 	}
-	
+
 	fclose(in);
 	// free(line);
 	// return sum;
@@ -41,7 +47,7 @@ int main(int argc, char *argv[])
 	// fgets(line, 100, in);
 	// printf("Alt program:getpid: %d  getpppid: %d\n", getpid(), getppid());
 	// printf("Writing this line to pipe : %s\n", line);
-	
+
 	// write(4, line, strlen(line) );
 	// printf("\nthe above line written to pipe\n");
 	// printf("lineCounter is reader %d\n", lineCounter);
