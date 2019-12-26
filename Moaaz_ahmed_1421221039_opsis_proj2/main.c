@@ -16,7 +16,6 @@ int square;
 int lineCounter;
 int pipefd[2];
 int readFileStatus = 1;
-void *status;
 
 int isNumber(char *str)
 {
@@ -50,18 +49,13 @@ void delay(int number_of_seconds)
 
 void *threadReader()
 {
-    
     char allNumbers[1000];
     read(pipefd[0], allNumbers, sizeof(allNumbers));
     char line[2] = "\n";
     char *numberToken = strtok(allNumbers, line);
-    // printf("lineCounter is %d\n", lineCounter);
     // numberToken[strlen(numberToken) - 1] = 0;
     for (int i = 0; i < lineCounter; i++)
     {
-        // printf("readFileStatus in thread is %d\n", readFileStatus);
-        
-        printf("number read in thread is %s\n", numberToken);
         // printf("isNumber(numberToken) is %d\n", isNumber(numberToken));
         if (isNumber(numberToken) == 0)
         {
@@ -69,7 +63,6 @@ void *threadReader()
             // bittiStatus = 0;
             readFileStatus = 0;
             // return 1;
-            pthread_mutex_unlock(&threadCalculatorLock);
             pthread_exit(1);
             // pthread_kill(pthread_self());
 
@@ -83,17 +76,16 @@ void *threadReader()
         // threadCalculator();
         // printf("i is  is %d\t", i);
         // printf("lineCounter is %d\n", lineCounter);
-        // printf("numberToken is %s\n", numberToken);
+        printf("numberToken is %s\n", numberToken);
 
         numberToken = strtok(NULL, line);
         // numberToken[strlen(numberToken) - 1] = 0;
 
-        // printf("this is i = %d\n",i);
         // do this to the last number in data.txt
-        if (i + 2 == lineCounter)
-        {
-            numberToken[strlen(numberToken) - 1] = 0;
-        }
+        // if (i + 2 == lineCounter)
+        // {
+        //     numberToken[strlen(numberToken) - 1] = 0;
+        // }
 
         // printf("i am unlocking calculator\n");
         pthread_mutex_unlock(&threadCalculatorLock);
@@ -124,7 +116,7 @@ void *threadCalculator()
 
 int main()
 {
-    
+
     int pid, status;
 
     if (pipe(pipefd) < 0)
@@ -135,28 +127,23 @@ int main()
 
     while (readFileStatus == 1)
     {
-        int slep = 10;
-        printf("waiting for %d seconds\n", slep);
-        sleep(slep);
+
         pid = fork();
 
         if (pid == 0)
         {
-            status = execv("reader", NULL);
+            status = execve("reader", NULL, NULL);
             perror("execve: execve failed\n");
             close(pipefd[1]);
         }
         else
         {
-            
             char allNumbers[1000];
             wait(&status);
-            // printf("readFileStatus in while is %d\n", readFileStatus);
             // get the line counter exist in data file
             lineCounter = WEXITSTATUS(status);
             if (lineCounter == 0)
             {
-                printf("File is empty !\nBitti\n");
                 exit(1);
             }
 
@@ -175,19 +162,13 @@ int main()
             generalAddition = 0;
             square = 0;
 
-            
+            void *status;
 
             pthread_create(&readerThread, NULL, threadReader, NULL);
             pthread_create(&calculatorThread, NULL, threadCalculator, NULL);
 
-            // for (int i = 0; i < lineCounter; i++)
-            // {
-            //     pthread_join(readerThread, &status);
-            //     pthread_join(calculatorThread, &status);
-            // }
-            
             pthread_join(readerThread, &status);
-            pthread_join(calculatorThread, &status);
+            // pthread_join(calculatorThread, &status);
 
             // pthread_mutex_destroy(&threadReaderLock);
             // pthread_mutex_destroy(&threadCalculatorLock);
@@ -228,17 +209,15 @@ int main()
         }
 
         // deleting the content of data.txt file
-        
+        fopen("data.txt", "w");
+
         // wait for 10 seconds
         // for (int i = 0; i < 250; i++)
         // {
             // delay(1);
-            
-            
+            sleep(15);
         // }
-        fopen("data.txt", "w");
     }
-
     // printf("this is from main (global reader): %d\n", test);
     printf("BİTTİ\n");
     return 0;

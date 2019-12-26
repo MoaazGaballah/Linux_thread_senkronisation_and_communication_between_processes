@@ -6,7 +6,7 @@ all: reader prog
 
 
 reader: reader.c
-	$(CC) main.c -o reader -lpthread
+	$(CC) main.c -o calc
 	
 prog: main.c
 	$(CC) main.c -o prog -lpthread
